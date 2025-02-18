@@ -1,9 +1,9 @@
 import hashlib
 import json
 import os
-from utils import error
 import platform
 from cache import cache
+import errors
 
 BROWSER_PATHS = {
     "chrome": {
@@ -22,11 +22,6 @@ BROWSER_PATHS = {
         "darwin": "~/Library/Application Support/BraveSoftware/Brave-Browser/Default/Bookmarks",
     },
 }
-
-
-class BookmarksFetchError(Exception):
-    def __str__(self):
-        return error(self.args[0])
 
 
 class Item:
@@ -85,7 +80,7 @@ class Bookmarks:
         path = self._get_path(browser)
 
         if not os.path.exists(path):
-            raise BookmarksFetchError(f"❌ Bookmarks file not found: {path}")
+            raise errors.ProcessingError(f"❌ Bookmarks file not found: {path}")
 
         with open(path, "r", encoding="utf-8") as file:
             browser_data = json.load(file)
@@ -123,7 +118,7 @@ class Bookmarks:
         for folder in self.folders:
             if folder.name.lower() == folder_name.lower():
                 return folder
-        raise BookmarksFetchError(f"❌ Folder not found: {folder_name}")
+        raise errors.ProcessingError(f"❌ Folder not found: {folder_name}")
 
     @property
     def unique_urls(self):

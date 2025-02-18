@@ -3,7 +3,7 @@ import openai
 
 import config
 from bookmarks import Item
-from utils import error
+import errors
 
 openai_client = openai.AsyncClient(api_key=config.OPENAI_API_KEY)
 
@@ -22,14 +22,16 @@ Format the response as a JSON array of objects, each containing the following fi
 
 async def process_bookmarks(items: list[Item], batch_size: int = 20):
     total_items = len(items)
-    batches = [items[i:i + batch_size] for i in range(0, total_items, batch_size)]
+    batches = [items[i : i + batch_size] for i in range(0, total_items, batch_size)]
 
     animation_task = asyncio.create_task(dot_animation())
     try:
         tasks = [process(batch) for batch in batches]
         responses = await asyncio.gather(*tasks)
     except openai.AuthenticationError:
-        raise EnvironmentError(error("\r🔑 Authentication error: Make sure your API key is correct."))
+        raise errors.EnvironmentError(
+            "\r🔑 Authentication error: Make sure your API key is correct."
+        )
     finally:
         animation_task.cancel()
         await asyncio.gather(animation_task, return_exceptions=True)
@@ -51,29 +53,26 @@ async def process(items: list[Item]):
     response_text = await fetch_description(user_prompt)
     return response_text
 
+
 def create_user_prompt(items: list[Item]) -> str:
     prompt = ""
     for item in items:
         prompt += f"Link: {item.url}\nTitle: {item.title}\n\n"
     return prompt
 
+
 async def fetch_description(user_prompt: str):
     response = await openai_client.chat.completions.create(
         model="gpt-4",
         messages=[
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT
-            },
-            {
-                "role": "user",
-                "content": user_prompt
-            }
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
         ],
         max_tokens=1500,
-        temperature=0.7
+        temperature=0.7,
     )
     return response.choices[0].message.content.strip()
+
 
 # Example usage
 async def main():
@@ -83,6 +82,7 @@ async def main():
         Item("Twitter", "https://twitter.com"),
     ]
     await process_bookmarks(urls)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

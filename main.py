@@ -6,8 +6,8 @@ import subprocess
 import sys
 
 import ai
-from bookmarks import BROWSER_PATHS, Bookmarks, BookmarksFetchError
-from utils import error
+from bookmarks import BROWSER_PATHS, Bookmarks
+import errors
 
 
 async def main():
@@ -30,7 +30,7 @@ async def main():
     print(f"📚 Exporting bookmarks from {args.browser.capitalize()}.")
     bookmarks = Bookmarks(args.browser)
     if not bookmarks.urls:
-        print(error("⚠️ Not found any bookmarks."))
+        raise errors.ProcessingError("⚠️ Not found any bookmarks.")
     print(f"🔍 Found: {len(bookmarks.urls)} bookmarks.")
 
     if args.folder:
@@ -50,13 +50,14 @@ def install_requirements():
     print("📦 Installing required packages...")
     subprocess.check_call(
         [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"],
-        stdout = subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
+
 
 if __name__ == "__main__":
     install_requirements()
     try:
         asyncio.run(main())
-    except (BookmarksFetchError, EnvironmentError) as e:
+    except (errors.ProcessingError, errors.EnvironmentError) as e:
         print(e)
