@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
-
-import csv
+import asyncio
 import argparse
+import subprocess
+import sys
+
+import ai
 from bookmarks import BROWSER_PATHS, Bookmarks, BookmarksFetchError
 from utils import error
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(
         description="Export bookmarks from the browser to a CSV file."
     )
@@ -35,7 +38,25 @@ def main():
         print(
             f"🔍 Found: {len(directory.urls)} bookmarks in the folder '{directory.name}'."
         )
+        if not directory.urls:
+            return
 
+    urls = directory.urls if args.folder else bookmarks.urls
+    bookmark_summaries = await ai.process_bookmarks(urls)
+    print(bookmark_summaries)
+
+
+def install_requirements():
+    print("📦 Installing required packages...")
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"],
+        stdout = subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
 
 if __name__ == "__main__":
-    main()
+    install_requirements()
+    try:
+        asyncio.run(main())
+    except (BookmarksFetchError, EnvironmentError) as e:
+        print(e)

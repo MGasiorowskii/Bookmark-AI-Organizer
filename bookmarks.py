@@ -123,7 +123,7 @@ class Bookmarks:
         for folder in self.folders:
             if folder.name.lower() == folder_name.lower():
                 return folder
-        return None
+        raise BookmarksFetchError(f"❌ Folder not found: {folder_name}")
 
     @property
     def unique_urls(self):
