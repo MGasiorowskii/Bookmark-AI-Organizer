@@ -5,7 +5,7 @@ import config
 import errors
 
 from bookmarks import Item
-from models import BookmarkSummaries
+from models import BookmarkSummaries, Bookmark
 from utils import dot_animation
 
 openai_client = openai.AsyncClient(api_key=config.OPENAI_API_KEY)
@@ -17,7 +17,7 @@ and a few tags describing the topic.
 """
 
 
-async def process_bookmarks(items: list[Item], batch_size: int = 10):
+async def process_bookmarks(items: list[Item], batch_size: int = 10) -> list[Bookmark]:
     print("\n🤖 Generating descriptions for bookmarks by AI.")
     total_items = len(items)
     batches = [items[i : i + batch_size] for i in range(0, total_items, batch_size)]
@@ -35,7 +35,7 @@ async def process_bookmarks(items: list[Item], batch_size: int = 10):
         await asyncio.gather(animation_task, return_exceptions=True)
 
     print("\r🤖 Processing bookmarks... Done!")
-    return [item for batch in responses for item in batch]
+    return [bookmark for batch in responses for bookmark in batch.bookmarks]
 
 
 async def process(items: list[Item]):
@@ -63,3 +63,18 @@ async def fetch_description(user_prompt: str) -> BookmarkSummaries:
         response_format=BookmarkSummaries,
     )
     return response.choices[0].message.parsed
+
+
+# Example usage
+async def main():
+    urls = [
+        Item("GitHub", "https://github.com"),
+        Item("Reddit", "https://www.reddit.com"),
+        Item("Twitter", "https://twitter.com"),
+    ]
+    result = await process_bookmarks(urls)
+    print(result)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

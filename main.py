@@ -32,7 +32,7 @@ async def main(args: argparse.Namespace):
         return print("📚 No unique bookmarks to process.")
 
     bookmark_summaries = await ai.process_bookmarks(urls)
-    await notion.upload_bookmarks(args.browser, bookmark_summaries.bookmarks)
+    await notion.upload_bookmarks(args.browser, bookmark_summaries)
 
 
 def install_requirements(if_install: bool):
@@ -74,4 +74,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(main(user_args))
     except (errors.ProcessingError, errors.EnvError) as e:
+        cache.clear_all()
         print(e)
