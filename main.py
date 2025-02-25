@@ -32,8 +32,7 @@ async def main(args: argparse.Namespace):
         return print("📚 No unique bookmarks to process.")
 
     bookmark_summaries = await ai.process_bookmarks(urls)
-    await notion.upload_bookmarks(args.browser, bookmark_summaries)
-
+    await notion.upload_bookmarks(args.browser, bookmark_summaries.bookmarks)
 
 
 def install_requirements(if_install: bool):

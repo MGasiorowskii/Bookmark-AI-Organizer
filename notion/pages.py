@@ -9,6 +9,7 @@ import errors
 from http import HTTPStatus
 
 import config
+from models import Bookmark
 from notion import schemas
 from utils import dot_animation
 
@@ -46,8 +47,8 @@ async def update(client: NotionClient):
 
 
 async def bulk_create(
-    client: NotionClient, data: list[dict]
-) -> tuple[int, int, list[tuple[str, str]]]:
+    client: NotionClient, data: list[Bookmark]
+) -> tuple[int, int, list[Bookmark]]:
     successes = 0
     failures = 0
     failed = []
@@ -59,7 +60,7 @@ async def bulk_create(
     for result, item in zip(results, data):
         if isinstance(result, Exception):
             failures += 1
-            failed.append((item["title"], item["url"]))
+            failed.append(item)
         else:
             successes += 1
 
@@ -69,7 +70,7 @@ async def bulk_create(
     return successes, failures, failed
 
 
-async def create(client: NotionClient, data: dict):
+async def create(client: NotionClient, data: Bookmark):
     payload = _get_payload(client.database_id, data)
 
     async with semaphore:
@@ -84,24 +85,21 @@ async def create(client: NotionClient, data: dict):
                 print(f"⚠️ Rate limit reached, retrying in {delay} seconds...")
                 await asyncio.sleep(delay)
 
-            data = await response.json()
             raise errors.ProcessingError(
                 f"❌ Page creating error: {response.status} - {response.reason}"
             )
 
 
-def _get_payload(database_id: str, data: dict) -> dict:
+def _get_payload(database_id: str, data: Bookmark) -> dict:
     payload = schemas.PAGE
     payload["parent"]["database_id"] = database_id
-    payload["properties"]["Name"]["title"][0]["text"]["content"] = data["title"]
-    payload["properties"]["Description"]["rich_text"][0]["text"]["content"] = data[
-        "description"
-    ]
-    payload["properties"]["URL"]["url"] = data["url"]
+    payload["properties"]["Name"]["title"][0]["text"]["content"] = data.title
+    payload["properties"]["Description"]["rich_text"][0]["text"][
+        "content"
+    ] = data.description
+    payload["properties"]["URL"]["url"] = data.url
     payload["properties"]["Seniority"]["multi_select"] = [
-        {"name": tag} for tag in data["seniority"]
+        {"name": s.value} for s in data.seniority
     ]
-    payload["properties"]["Tags"]["multi_select"] = [
-        {"name": tag} for tag in data["tags"]
-    ]
+    payload["properties"]["Tags"]["multi_select"] = [{"name": t} for t in data.tags]
     return payload

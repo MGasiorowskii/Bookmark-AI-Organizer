@@ -1,4 +1,3 @@
-import json
 import asyncio
 import openai
 
@@ -6,6 +5,7 @@ import config
 import errors
 
 from bookmarks import Item
+from models import BookmarkSummaries
 from utils import dot_animation
 
 openai_client = openai.AsyncClient(api_key=config.OPENAI_API_KEY)
@@ -14,13 +14,6 @@ SYSTEM_PROMPT = """
 Provide a short description for each link, 
 the seniority level the content is suitable for, 
 and a few tags describing the topic. 
-Format the response as a JSON array of objects, each containing the following fields:
-- "title": The title of the link.
-- "url": The URL of the link.
-- "description": A short description of the content.
-- "seniority": The list of seniority levels the content is suitable for (junior, mid, senior).
-- "tags": A list of tags describing the topic.
-Do not add ``json or ``` tags around your responses.
 """
 
 
@@ -58,8 +51,8 @@ def create_user_prompt(items: list[Item]) -> str:
     return prompt
 
 
-async def fetch_description(user_prompt: str):
-    response = await openai_client.chat.completions.create(
+async def fetch_description(user_prompt: str) -> BookmarkSummaries:
+    response = await openai_client.beta.chat.completions.parse(
         model=config.OPENAI_MODEL_NAME,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -67,21 +60,6 @@ async def fetch_description(user_prompt: str):
         ],
         max_tokens=1500,
         temperature=0.7,
+        response_format=BookmarkSummaries,
     )
-    content = response.choices[0].message.content.strip()
-    return json.loads(content)
-
-
-# Example usage
-async def main():
-    urls = [
-        Item("GitHub", "https://github.com"),
-        Item("Reddit", "https://www.reddit.com"),
-        Item("Twitter", "https://twitter.com"),
-    ]
-    result = await process_bookmarks(urls)
-    print(result)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    return response.choices[0].message.parsed

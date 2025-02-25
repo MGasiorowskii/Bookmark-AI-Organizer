@@ -2,6 +2,7 @@ import aiohttp
 
 import config
 from cache import cache
+from models import Bookmark
 from notion import databases, pages
 
 NOTION_API_URL = "https://api.notion.com/v1"
@@ -30,7 +31,7 @@ class NotionClient:
         await self.session.__aexit__(None, None, None)
 
 
-async def upload_bookmarks(browser: str, bookmarks: list[dict]):
+async def upload_bookmarks(browser: str, bookmarks: list[Bookmark]):
     print(f"\n📚 Uploading bookmarks to Notion")
     async with NotionClient(browser) as client:
         found_pages = await pages.search(client)
@@ -49,8 +50,8 @@ async def upload_bookmarks(browser: str, bookmarks: list[dict]):
     if failed:
         print("\n📌 Failed bookmarks:")
         to_clear = []
-        for title, url in failed:
-            print(f"  - {title}")
-            to_clear.append(url)
+        for bookmark in failed:
+            print(f"  - {bookmark.title}")
+            to_clear.append(bookmark.url)
 
         cache.clear(to_clear)

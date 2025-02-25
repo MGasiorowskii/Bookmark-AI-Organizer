@@ -36,7 +36,7 @@ class Cache:
         for url in urls:
             self.known_hashes.remove(self.hash(url))
 
-    def hash(self, value:str):
+    def hash(self, value: str):
         hashlib.sha256(value.encode()).hexdigest()
 
 
