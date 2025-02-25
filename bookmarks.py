@@ -4,24 +4,7 @@ import os
 import platform
 from cache import cache
 import errors
-
-BROWSER_PATHS = {
-    "chrome": {
-        "windows": r"%LOCALAPPDATA%\Google\Chrome\User Data\Default\Bookmarks",
-        "linux": "~/config/google-chrome/Default/Bookmarks",
-        "darwin": "~/Library/Application Support/Google/Chrome/Default/Bookmarks",
-    },
-    "edge": {
-        "windows": r"%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Bookmarks",
-        "linux": "~/config/microsoft-edge/Default/Bookmarks",
-        "darwin": "~/Library/Application Support/Microsoft Edge/Default/Bookmarks",
-    },
-    "brave": {
-        "windows": r"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\Bookmarks",
-        "linux": "~/.config/BraveSoftware/Brave-Browser/Default/Bookmarks",
-        "darwin": "~/Library/Application Support/BraveSoftware/Brave-Browser/Default/Bookmarks",
-    },
-}
+import config
 
 
 class Item:
@@ -90,7 +73,9 @@ class Bookmarks:
     def _get_path(self, browser: str) -> str:
         """Returns the path to the bookmarks file for the selected browser."""
         system = platform.system().lower()
-        return os.path.expandvars(os.path.expanduser(BROWSER_PATHS[browser][system]))
+        return os.path.expandvars(
+            os.path.expanduser(config.BROWSER_PATHS[browser][system])
+        )
 
     def process_root(self, browser_data: dict):
         self.root = Folder("Root")

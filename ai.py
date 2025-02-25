@@ -3,8 +3,10 @@ import asyncio
 import openai
 
 import config
-from bookmarks import Item
 import errors
+
+from bookmarks import Item
+from utils import dot_animation
 
 openai_client = openai.AsyncClient(api_key=config.OPENAI_API_KEY)
 
@@ -21,7 +23,9 @@ Format the response as a JSON array of objects, each containing the following fi
 Do not add ``json or ``` tags around your responses.
 """
 
+
 async def process_bookmarks(items: list[Item], batch_size: int = 10):
+    print("\n🤖 Generating descriptions for bookmarks by AI.")
     total_items = len(items)
     batches = [items[i : i + batch_size] for i in range(0, total_items, batch_size)]
 
@@ -30,7 +34,7 @@ async def process_bookmarks(items: list[Item], batch_size: int = 10):
         tasks = [process(batch) for batch in batches]
         responses = await asyncio.gather(*tasks)
     except openai.AuthenticationError:
-        raise errors.EnvironmentError(
+        raise errors.EnvError(
             "\r🔑 Authentication error: Make sure your API key is correct."
         )
     finally:
@@ -39,14 +43,6 @@ async def process_bookmarks(items: list[Item], batch_size: int = 10):
 
     print("\r🤖 Processing bookmarks... Done!")
     return [item for batch in responses for item in batch]
-
-
-async def dot_animation():
-    while True:
-        for dots in range(1, 4):
-            print(f"\r🤖 Processing bookmarks{'.' * dots}", end="")
-            await asyncio.sleep(0.5)
-        print("\r", end="")
 
 
 async def process(items: list[Item]):
@@ -72,7 +68,7 @@ async def fetch_description(user_prompt: str):
         max_tokens=1500,
         temperature=0.7,
     )
-    content =  response.choices[0].message.content.strip()
+    content = response.choices[0].message.content.strip()
     return json.loads(content)
 
 

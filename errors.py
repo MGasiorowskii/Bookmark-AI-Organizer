@@ -1,4 +1,4 @@
-class EnvironmentError(Exception):
+class EnvError(Exception):
     def __str__(self):
         return warning(self.args[0])
 
