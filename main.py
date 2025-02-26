@@ -49,7 +49,7 @@ def install_requirements(if_install: bool):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Export bookmarks from the browser to a CSV file."
+        description="Export bookmarks from the browser to the Notion."
     )
     parser.add_argument(
         "--browser",
